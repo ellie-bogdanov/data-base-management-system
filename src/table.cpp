@@ -139,27 +139,23 @@ bool interpreter::compare_values(const std::variant<int, double, char, std::stri
     return compare_result;
 }
 
-void table::make_result_column(column &column_to_add, const column &compare_column_itr, const std::variant<int, double, char, std::string> rvalue, std::string op) {
-    std::visit([rvalue, op, &column_to_add]<class T>(const std::vector<T> &compare_column_entries) {
+bool table::make_result_column(column &column_to_add, const column &compare_column_itr, const std::variant<int, double, char, std::string> rvalue, std::string op) {
+    bool is_empty_flag = true;
+    std::visit([rvalue, op, &column_to_add, &is_empty_flag]<class T>(const std::vector<T> &compare_column_entries) {
         for (const T &current_entry : compare_column_entries) {
             if (interpreter::compare_values(current_entry, rvalue, op)) {
                 column_to_add.add_entry(current_entry);
+                is_empty_flag = false;
             }
         }
     },
                compare_column_itr.entries);
-}
-std::vector<column> table::read_table(const std::string &statement) const {
 
-    // result_table is a new table which contains all the entries from the original table that answer the conditions
+    return is_empty_flag;
+}
+table *table::read_table(const std::string &statement) const {
+
     std::vector<column> result_table;
-    for (auto element : contents) {
-        result_table.push_back(
-            std::holds_alternative<std::vector<int>>(element.entries)      ? column(element.name, std::vector<int>())
-            : std::holds_alternative<std::vector<double>>(element.entries) ? column(element.name, std::vector<double>())
-            : std::holds_alternative<std::vector<char>>(element.entries)   ? column(element.name, std::vector<char>())
-                                                                           : column(element.name, std::vector<std::string>()));
-    }
     std::vector<std::string> tokens = interpreter::tokenizer(statement, table::READ_DELIM);
 
     for (size_t i = 0; i < tokens.size(); ++i) {
@@ -210,10 +206,11 @@ std::vector<column> table::read_table(const std::string &statement) const {
             throw(1);
         }
 
-        make_result_column(col_to_add, *current_col, rvalue_converted, op);
-        result_table.push_back(col_to_add);
+        if (!make_result_column(col_to_add, *current_col, rvalue_converted, op))
+            result_table.push_back(col_to_add);
     }
-    return result_table;
+    table *p_result_table = new table(result_table);
+    return p_result_table;
 }
 
 void table::print_table() const {

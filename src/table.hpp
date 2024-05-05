@@ -68,7 +68,7 @@ private:
     column *primary_key;
     // pushed the whole row from contents into a provided map with the index of said row
 
-    static void make_result_column(column &column_to_add, const column &compare_column_itr, const std::variant<int, double, char, std::string> rvalue, std::string op);
+    static bool make_result_column(column &column_to_add, const column &compare_column_itr, const std::variant<int, double, char, std::string> rvalue, std::string op);
 
 public:
     // delimiter for reading from table statements
@@ -94,7 +94,7 @@ public:
     // reading from the table. the read statement must be of this syntax: column_name comparison_operator rvalue) column_name comparison_operator rvalue
     // each end of section must be seperated by ')'
     // example my_double_col >= 4.5) my_char_col > D
-    std::vector<column> read_table(const std::string &statement) const;
+    table *read_table(const std::string &statement) const;
 
     void print_table() const;
 };

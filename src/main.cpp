@@ -26,14 +26,14 @@ int main() {
     std::string statement = "INT int_col PK, DOUBLE dob_col, CHAR ch_col, STR str_col";
     table t(contents);
     std::string read_statement = "int_col > 1)dob_col < 10.0)char_col == D";
-    std::vector<column> result = t.read_table(read_statement);
+    table *result = t.read_table(read_statement);
 
-    for (column col : result) {
-        col.print_column();
-    }
+    result->print_table();
     // contents = t.get_contents();
     // contents[cd] = {e1d, e2d};
     //  std::cout << std::get<double>(contents.at(cd)[0].value) << '\n';
+
+    delete result;
 
     return 0;
 }

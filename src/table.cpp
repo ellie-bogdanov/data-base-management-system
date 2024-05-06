@@ -1,11 +1,9 @@
 #include "table.hpp"
-#include <algorithm>
 #include <iostream>
-#include <typeinfo>
+#include <iterator>
+#include <sstream>
 
 using std::size_t;
-entry::entry(std::variant<int, double, char, std::string> value) : value(value) {
-}
 
 column::column(const std::string &name, const std::variant<std::vector<int>, std::vector<double>, std::vector<char>, std::vector<std::string>> &entries) : name(name), entries(entries) {
 }
@@ -220,7 +218,7 @@ table *table::read_table(const std::string &statement) const {
         if (!make_result_column(col_to_add, *current_col, rvalue_converted, op))
             result_table.push_back(col_to_add);
     }
-    table *p_result_table = new table(result_table);
+    table *p_result_table = new table(std::move(result_table));
     return p_result_table;
 }
 

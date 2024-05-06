@@ -1,9 +1,6 @@
 
 #pragma once
 
-#include <iterator>
-#include <memory>
-#include <sstream>
 #include <string>
 #include <variant>
 #include <vector>
@@ -15,21 +12,6 @@ namespace interpreter {
     // comparing values of two std::variant base on given comparison operator
     bool compare_values(const std::variant<int, double, char, std::string> &lvalue, const std::variant<int, double, char, std::string> &rvalue, std::string comp_operator);
 }
-
-// currently available value types in the table. NILL means there is no value inside or a std::string equals to NILL
-enum types {
-    INT,
-    DOUBLE,
-    CHAR,
-    STR,
-    NILL
-};
-
-// single entry in the table, each entry is part of a vector which is the value of a column key in the table map
-struct entry {
-    std::variant<int, double, char, std::string> value;
-    entry(std::variant<int, double, char, std::string> value);
-};
 
 // single column in the table, it is a key in a map to a vector of entries value
 struct column {

@@ -17,6 +17,7 @@ int main() {
     std::vector<char> row_c = {e1c, e2c};
 
     column ci("int_col", row_i);
+    column *primary_key = &ci;
     ci.is_primary_key = true;
     column cd("dob_col", row_d);
     column cc("char_col", row_c);
@@ -24,7 +25,7 @@ int main() {
     std::vector<column> contents{ci, cd, cc};
 
     std::string statement = "INT int_col PK, DOUBLE dob_col, CHAR ch_col, STR str_col";
-    table t(contents);
+    table t(contents, primary_key);
     std::string read_statement = "int_col > 1)dob_col < 10.0)char_col == D";
     table *result = t.read_table(read_statement);
 

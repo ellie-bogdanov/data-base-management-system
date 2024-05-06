@@ -17,7 +17,6 @@ namespace interpreter {
 struct column {
     std::string name;
     std::variant<std::vector<int>, std::vector<double>, std::vector<char>, std::vector<std::string>> entries;
-    bool is_primary_key = false;
 
     column(const std::string &name, const std::variant<std::vector<int>, std::vector<double>, std::vector<char>, std::vector<std::string>> &entries);
     column();
@@ -58,7 +57,8 @@ public:
     const static char COL_CREATE_DELIM = ' ';
 
     // creating a table by providing an existing map mostly for debug purposes
-    table(const std::vector<column> &contents);
+    table(const std::vector<column> &contents, column *primary_key);
+    ~table();
 
     // intended way of creating a table by the user with the following syntax: column_type column_name PK, column_type column_name; etc...
     // must be exactly one section that ends with PK to tell which column is the primary key
@@ -66,7 +66,7 @@ public:
 
     std::string get_primary_key() const;
     std::vector<column> get_contents() const;
-    int change_primary_key(const column &new_key);
+    int change_primary_key(column *new_key);
 
     // reading from the table. the read statement must be of this syntax: column_name comparison_operator rvalue) column_name comparison_operator rvalue
     // each end of section must be seperated by ')'

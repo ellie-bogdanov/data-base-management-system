@@ -15,14 +15,25 @@ column::column() {
 }
 
 void column::add_entry(const std::variant<int, double, char, std::string> entry_to_add) {
-    std::variant<std::vector<int>, std::vector<double>, std::vector<char>, std::vector<std::string>> movable;
-    std::visit(overloaded{
-                   [entry_to_add, &movable](std::vector<int> &entry_vec) { entry_vec.push_back(std::get<int>(entry_to_add)); movable = entry_vec; },
-                   [entry_to_add, &movable](std::vector<double> &entry_vec) { entry_vec.push_back(std::get<double>(entry_to_add)); movable = entry_vec; },
-                   [entry_to_add, &movable](std::vector<char> &entry_vec) { entry_vec.push_back(std::get<char>(entry_to_add)); movable = entry_vec; },
-                   [entry_to_add, &movable](std::vector<std::string> &entry_vec) { entry_vec.push_back(std::get<std::string>(entry_to_add)); movable = entry_vec; }},
-               entries);
-    entries = std::move(movable);
+
+    entries = std::visit([entry_to_add]<class T>(std::vector<T> &vec) -> std::variant<std::vector<int>, std::vector<double>, std::vector<char>, std::vector<std::string>> {
+        if (std::holds_alternative<int>(entry_to_add)) {
+            vec.push_back(std::get<T>(entry_to_add));
+            return vec;
+        } else if (std::holds_alternative<double>(entry_to_add)) {
+            vec.push_back(std::get<T>(entry_to_add));
+            return vec;
+        } else if (std::holds_alternative<char>(entry_to_add)) {
+            vec.push_back(std::get<T>(entry_to_add));
+            return vec;
+        } else if (std::holds_alternative<std::string>(entry_to_add)) {
+            vec.push_back(std::get<T>(entry_to_add));
+            return vec;
+        }
+        std::cout << "entry with undefined type \n";
+        throw(1);
+    },
+                         entries);
 }
 
 table::table(const std::vector<column> &contents) : contents(contents) {

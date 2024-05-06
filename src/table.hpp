@@ -8,11 +8,6 @@
 #include <variant>
 #include <vector>
 
-template <class... Ts>
-struct overloaded : Ts... {
-    using Ts::operator()...;
-};
-
 namespace interpreter {
     // simple tokenizer that return a vector of strings which were seperated by delim in statement
     std::vector<std::string> tokenizer(const std::string &statement, char delim);

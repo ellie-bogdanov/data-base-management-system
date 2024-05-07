@@ -1,4 +1,6 @@
-#include "table.hpp"
+#include "../include/table.hpp"
+#include <algorithm>
+#include <execution>
 #include <iostream>
 #include <iterator>
 #include <sstream>
@@ -34,8 +36,25 @@ void column::add_entry(const std::variant<int, double, char, std::string> entry_
                          entries);
 }
 
-table::table(const std::vector<column> &contents, column *primary_key) : contents(contents), primary_key(primary_key) {
+entry column::get_entry(size_t entry_index) const {
+    return std::visit([entry_index]<class T>(const std::vector<T> &entries) -> entry { return entries[entry_index]; }, entries);
+}
+
+table::table(const std::vector<column> &contents, column *primary_key) : contents(contents) {
     this->primary_key = new column(primary_key->name, primary_key->entries);
+}
+
+table::table(const table &copy_empty) {
+    for (const column &copy_col : copy_empty.contents) {
+        std::visit([this, copy_col]<class T>(const std::vector<T> &entries) {
+            if (std::get_if<std::vector<T>>(&copy_col.entries)) {
+                contents.emplace_back(copy_col.name, std::vector<T>());
+            }
+        },
+                   copy_col.entries);
+        if (copy_empty.primary_key == &copy_col)
+            primary_key = &contents.back();
+    }
 }
 
 table::~table() {
@@ -168,11 +187,27 @@ bool table::make_result_column(column &column_to_add, const column &compare_colu
 
     return is_empty_flag;
 }
+
+void table::add_matching_rows(table &table_to_mod, const std::vector<column>::const_iterator &compare_column, const entry rvalue, std::string op, std::vector<size_t> &captured_row_indicies) const {
+
+    std::visit([&table_to_mod, rvalue, op, &captured_row_indicies, this]<class T>(const std::vector<T> &compare_column) {
+        for (size_t i = 0; i < compare_column.size(); ++i) {
+            if (std::find(captured_row_indicies.begin(), captured_row_indicies.end(), i) != captured_row_indicies.end()) {
+                continue;
+            }
+            if (interpreter::compare_values(compare_column[i], rvalue, op)) {
+                captured_row_indicies.push_back(i);
+                table_to_mod.add_row(*this, i);
+            }
+        }
+    },
+               compare_column->entries);
+}
 table *table::read_table(const std::string &statement) const {
 
-    std::vector<column> result_table;
-    column *result_table_primary_key = new column();
+    table *ptr_result_table = new table(*this);
     std::vector<std::string> tokens = interpreter::tokenizer(statement, table::READ_DELIM);
+    std::vector<size_t> captured_row_indicies;
 
     for (size_t i = 0; i < tokens.size(); ++i) {
         std::stringstream token_stream(tokens[i]);
@@ -187,12 +222,8 @@ table *table::read_table(const std::string &statement) const {
         std::getline(token_stream, rvalue, ' ');
 
         std::vector<column>::const_iterator current_col = contents.begin();
-
-        for (; current_col != contents.end(); ++current_col) {
-            if (current_col->name == col_name)
-
-                break;
-        }
+        while (current_col != contents.end() && current_col->name != col_name)
+            ++current_col;
 
         // if didn't find then it is an invalid column name and throw error
         if (current_col == contents.end()) {
@@ -223,18 +254,16 @@ table *table::read_table(const std::string &statement) const {
             throw(1);
         }
 
-        if (!make_result_column(col_to_add, *current_col, rvalue_converted, op)) {
-            result_table.push_back(col_to_add);
-            if (col_to_add.name == primary_key->name)
-                result_table_primary_key = &result_table.back();
-        }
+        add_matching_rows(*ptr_result_table, current_col, rvalue_converted, op, captured_row_indicies);
     }
-    table *p_result_table = new table(std::move(result_table), result_table_primary_key);
-    return p_result_table;
+    return ptr_result_table;
 }
 
 int table::change_primary_key(column *primary_key) {
+    if (primary_key == nullptr)
+        return 1;
     this->primary_key = primary_key;
+    return 0;
 }
 
 void table::print_table() const {
@@ -252,4 +281,10 @@ void column::print_column() const {
         }
     },
                entries);
+}
+
+void table::add_row(const table &original_table, size_t row_index) {
+    for (size_t i = 0; i < original_table.get_contents().size(); ++i) {
+        contents[i].add_entry(original_table.get_contents()[i].get_entry(row_index));
+    }
 }

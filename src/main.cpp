@@ -1,4 +1,4 @@
-#include "table.hpp"
+#include "../include/table.hpp"
 #include <iostream>
 
 int main() {
@@ -18,7 +18,6 @@ int main() {
 
     column ci("int_col", row_i);
     column *primary_key = &ci;
-    ci.is_primary_key = true;
     column cd("dob_col", row_d);
     column cc("char_col", row_c);
 
@@ -26,7 +25,7 @@ int main() {
 
     std::string statement = "INT int_col PK, DOUBLE dob_col, CHAR ch_col, STR str_col";
     table t(contents, primary_key);
-    std::string read_statement = "int_col > 1)dob_col < 10.0)char_col == D";
+    std::string read_statement = "int_col > 1)dob_col > 5.23)char_col == D)int_col > 100";
     table *result = t.read_table(read_statement);
 
     result->print_table();

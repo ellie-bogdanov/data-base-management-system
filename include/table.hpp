@@ -5,6 +5,9 @@
 #include <variant>
 #include <vector>
 
+using var_vec = std::variant<std::vector<int>, std::vector<double>, std::vector<char>, std::vector<std::string>>;
+using entry = std::variant<int, double, char, std::string>;
+
 namespace interpreter {
     // simple tokenizer that return a vector of strings which were seperated by delim in statement
     std::vector<std::string> tokenizer(const std::string &statement, char delim);
@@ -16,7 +19,7 @@ namespace interpreter {
 // single column in the table, it is a key in a map to a vector of entries value
 struct column {
     std::string name;
-    std::variant<std::vector<int>, std::vector<double>, std::vector<char>, std::vector<std::string>> entries;
+    var_vec entries;
 
     column(const std::string &name, const std::variant<std::vector<int>, std::vector<double>, std::vector<char>, std::vector<std::string>> &entries);
     column();
@@ -33,6 +36,8 @@ struct column {
 
     void add_entry(const std::variant<int, double, char, std::string> entry_to_add);
 
+    entry get_entry(size_t entry_index) const;
+
     void print_column() const;
 };
 
@@ -45,6 +50,7 @@ private:
     // pushed the whole row from contents into a provided map with the index of said row
 
     static bool make_result_column(column &column_to_add, const column &compare_column_itr, const std::variant<int, double, char, std::string> rvalue, std::string op);
+    void add_matching_rows(table &table_to_mod, const std::vector<column>::const_iterator &compare_column, const entry rvalue, std::string op, std::vector<size_t> &captured_row_indicies) const;
 
 public:
     // delimiter for reading from table statements
@@ -58,11 +64,15 @@ public:
 
     // creating a table by providing an existing map mostly for debug purposes
     table(const std::vector<column> &contents, column *primary_key);
-    ~table();
 
     // intended way of creating a table by the user with the following syntax: column_type column_name PK, column_type column_name; etc...
     // must be exactly one section that ends with PK to tell which column is the primary key
     table(const std::string &create_statement);
+
+    // create an table with empty contents with columns that type match with the columns from provided table
+    table(const table &copy_empty);
+
+    ~table();
 
     std::string get_primary_key() const;
     std::vector<column> get_contents() const;
@@ -72,6 +82,8 @@ public:
     // each end of section must be seperated by ')'
     // example my_double_col >= 4.5) my_char_col > D
     table *read_table(const std::string &statement) const;
+
+    void add_row(const table &original_table, size_t row_index);
 
     void print_table() const;
 };

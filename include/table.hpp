@@ -1,21 +1,8 @@
 
 #pragma once
 
-#include <string>
-#include <variant>
-#include <vector>
-
-using std::size_t;
-using var_vec = std::variant<std::vector<int>, std::vector<double>, std::vector<char>, std::vector<std::string>>;
-using entry = std::variant<int, double, char, std::string>;
-
-namespace interpreter {
-    // simple tokenizer that return a vector of strings which were seperated by delim in statement
-    std::vector<std::string> tokenizer(const std::string &statement, char delim);
-
-    // comparing values of two std::variant base on given comparison operator
-    bool compare_values(const entry &lvalue, const entry &rvalue, std::string comp_operator);
-}
+#include "common.hpp"
+#include "interpreter.hpp"
 
 // single column in the table, it is a key in a map to a vector of entries value
 struct column {

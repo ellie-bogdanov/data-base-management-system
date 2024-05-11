@@ -14,7 +14,7 @@ namespace interpreter {
     std::vector<std::string> tokenizer(const std::string &statement, char delim);
 
     // comparing values of two std::variant base on given comparison operator
-    bool compare_values(const entry&lvalue, const entry &rvalue, std::string comp_operator);
+    bool compare_values(const entry &lvalue, const entry &rvalue, std::string comp_operator);
 }
 
 // single column in the table, it is a key in a map to a vector of entries value
@@ -71,14 +71,14 @@ public:
     // must be exactly one section that ends with PK to tell which column is the primary key
     table(const std::string &create_statement);
 
-    table(const table& copy_table);
+    table(const table &copy_table);
 
     table();
 
     ~table();
 
-    void copy_empty_columns(const std::vector<column>& columns);
-    column* const get_primary_key() const;
+    void copy_empty_columns(const std::vector<column> &columns);
+    column *const get_primary_key() const;
     std::vector<column> get_contents() const;
     int change_primary_key(column *new_key);
 
@@ -87,10 +87,13 @@ public:
     // example: my_double_col >= 4.5) my_char_col > D
     table *read_table(const std::string &statement) const;
 
-    void update_table(const std::string& statement);
+    // parse the update statement into tokens and parse them into the right type
+    void update_table(const std::string &statement);
 
+    // add a specific row from a given table
     void add_row_from_table(const table &original_table, size_t row_index);
 
+    // add a row at the bottom of the table
     void add_new_row(std::vector<entry> row);
 
     void print_table() const;

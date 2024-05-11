@@ -52,8 +52,9 @@ TEST(entry_test, get_entry_test) {
     GTEST_ASSERT_EQ(std::get<char>(get_entry_test(rand_index, char_col)), char_vec[rand_index]);
     GTEST_ASSERT_EQ(std::get<std::string>(get_entry_test(rand_index, str_col)), str_vec[rand_index]);
 }
-
+/*
 int main(int argc, char *argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
+*/

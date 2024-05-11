@@ -31,7 +31,6 @@ int main() {
     std::string update_statement3 = "83,1287.0202,a,ldkhlasdh";
     std::string update_statement4 = "57198723,17263.3312573,l,jhnLKJH lJH KLGH KJY FV";
 
-   
     table t(create_statement);
     t.update_table(update_statement1);
     t.update_table(update_statement2);
@@ -40,15 +39,13 @@ int main() {
 
     // table t(contents, primary_key);
     // t.print_table();
-    
+
     std::string read_statement = "int_col >= 150)dob_col < 16000)char_col == a)str_col != hello world";
     table *result = t.read_table(read_statement);
 
     result->print_table();
-    
 
     delete result;
-    
 
     return 0;
 }

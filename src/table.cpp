@@ -7,33 +7,20 @@
 
 using std::size_t;
 
-column::column(const std::string &name, const std::variant<std::vector<int>, std::vector<double>, std::vector<char>, std::vector<std::string>> &entries) : name(name), entries(entries) {
+column::column(const std::string &name, const var_vec &entries) : name(name), entries(entries) {
 }
 
 column::column() {
     name = "NULL";
 }
 
-void column::add_entry(const std::variant<int, double, char, std::string> entry_to_add) {
+void column::add_entry(const entry entry_to_add) {
 
-    entries = std::visit([entry_to_add]<class T>(std::vector<T> &vec) -> std::variant<std::vector<int>, std::vector<double>, std::vector<char>, std::vector<std::string>> {
-        if (std::holds_alternative<int>(entry_to_add)) {
-            vec.push_back(std::get<T>(entry_to_add));
-            return vec;
-        } else if (std::holds_alternative<double>(entry_to_add)) {
-            vec.push_back(std::get<T>(entry_to_add));
-            return vec;
-        } else if (std::holds_alternative<char>(entry_to_add)) {
-            vec.push_back(std::get<T>(entry_to_add));
-            return vec;
-        } else if (std::holds_alternative<std::string>(entry_to_add)) {
-            vec.push_back(std::get<T>(entry_to_add));
-            return vec;
-        }
-        std::cout << "entry with undefined type \n";
-        throw(1);
+    entries = std::visit([entry_to_add]<class T>(std::vector<T> &vec) -> var_vec {
+        vec.push_back(std::get<T>(entry_to_add));
+        return vec;
     },
-                         entries);
+        entries);
 }
 
 entry column::get_entry(size_t entry_index) const {
@@ -44,17 +31,13 @@ table::table(const std::vector<column> &contents, column *primary_key) : content
     this->primary_key = new column(primary_key->name, primary_key->entries);
 }
 
-table::table(const table &copy_empty) {
-    for (const column &copy_col : copy_empty.contents) {
-        std::visit([this, copy_col]<class T>(const std::vector<T> &entries) {
-            if (std::get_if<std::vector<T>>(&copy_col.entries)) {
-                contents.emplace_back(copy_col.name, std::vector<T>());
-            }
-        },
-                   copy_col.entries);
-        if (copy_empty.primary_key == &copy_col)
-            primary_key = &contents.back();
-    }
+table::table(const table& copy_table) {
+    primary_key = new column(copy_table.primary_key->name, copy_table.primary_key->entries);
+    contents = copy_table.contents;
+}
+
+table::table() {
+    primary_key = nullptr;
 }
 
 table::~table() {
@@ -62,7 +45,8 @@ table::~table() {
 }
 
 table::table(const std::string &create_statement) {
-    std::vector<column> contents;
+    primary_key = nullptr;
+    // std::vector<column> contents;
     // creating a std::stringstream of provided statement for parsing
     std::stringstream create_statement_stream(create_statement);
 
@@ -157,7 +141,7 @@ std::vector<std::string> interpreter::tokenizer(const std::string &statement, ch
 }
 
 // checking all options of comparisons and
-bool interpreter::compare_values(const std::variant<int, double, char, std::string> &lvalue, const std::variant<int, double, char, std::string> &rvalue, std::string comp_operator) {
+bool interpreter::compare_values(const entry &lvalue, const entry &rvalue, std::string comp_operator) {
     bool is_valid_comp_op = true;
     bool compare_result = (comp_operator == "==") ? (lvalue == rvalue) : (comp_operator == ">") ? (lvalue > rvalue)
                                                                      : (comp_operator == "<")   ? (lvalue < rvalue)
@@ -173,7 +157,7 @@ bool interpreter::compare_values(const std::variant<int, double, char, std::stri
     return compare_result;
 }
 
-bool table::make_result_column(column &column_to_add, const column &compare_column_itr, const std::variant<int, double, char, std::string> rvalue, std::string op) {
+bool table::make_result_column(column &column_to_add, const column &compare_column_itr, const entry rvalue, std::string op) {
     bool is_empty_flag = true;
     std::visit([rvalue, op, &column_to_add, &is_empty_flag]<class T>(const std::vector<T> &compare_column_entries) {
         for (const T &current_entry : compare_column_entries) {
@@ -197,7 +181,7 @@ void table::add_matching_rows(table &table_to_mod, const std::vector<column>::co
             }
             if (interpreter::compare_values(compare_column[i], rvalue, op)) {
                 captured_row_indicies.push_back(i);
-                table_to_mod.add_row(*this, i);
+                table_to_mod.add_row_from_table(*this, i);
             }
         }
     },
@@ -205,7 +189,8 @@ void table::add_matching_rows(table &table_to_mod, const std::vector<column>::co
 }
 table *table::read_table(const std::string &statement) const {
 
-    table *ptr_result_table = new table(*this);
+    table *ptr_result_table = new table();
+    ptr_result_table->copy_empty_columns(contents);
     std::vector<std::string> tokens = interpreter::tokenizer(statement, table::READ_DELIM);
     std::vector<size_t> captured_row_indicies;
 
@@ -232,7 +217,7 @@ table *table::read_table(const std::string &statement) const {
         }
 
         // creating a variant to compare the rvalue to the values inside the column
-        std::variant<int, double, char, std::string> rvalue_converted;
+        entry rvalue_converted;
         column col_to_add;
         col_to_add.name = current_col->name;
 
@@ -283,8 +268,76 @@ void column::print_column() const {
                entries);
 }
 
-void table::add_row(const table &original_table, size_t row_index) {
+void table::add_row_from_table(const table &original_table, size_t row_index) {
     for (size_t i = 0; i < original_table.get_contents().size(); ++i) {
         contents[i].add_entry(original_table.get_contents()[i].get_entry(row_index));
+    }
+}
+
+
+void table::copy_empty_columns(const std::vector<column>& columns) {
+    for (const column& col : columns) {
+        if (std::holds_alternative<std::vector<int>>(col.entries)) {
+            contents.emplace_back(col.name, std::vector<int>());
+        }
+        else if (std::holds_alternative<std::vector<double>>(col.entries)) {
+            contents.emplace_back(col.name, std::vector<double>());
+        }
+        else if (std::holds_alternative<std::vector<char>>(col.entries)) {
+            contents.emplace_back(col.name, std::vector<char>());
+        }
+        else if (std::holds_alternative<std::vector<std::string>>(col.entries)) {
+            contents.emplace_back(col.name, std::vector<std::string>());
+        }
+    }
+}
+
+column* const table::get_primary_key() const {
+    return primary_key;
+}
+
+
+void table::update_table(const std::string& statement) {
+    std::vector<std::string> tokens = interpreter::tokenizer(statement, UPDATE_DELIM);
+    std::vector<entry> row;
+    if (tokens.size() != contents.size()) {
+        std::cout << "amount of entries does not match the amount of columns in the table\n";
+        throw(1);
+    }
+    for (size_t i = 0; i < tokens.size(); ++i) {
+        if (std::holds_alternative<std::vector<int>>(contents[i].entries)) {
+            row.push_back(std::stoi(tokens[i]));
+        }
+        else if (std::holds_alternative<std::vector<double>>(contents[i].entries)) {
+            row.push_back(std::stod(tokens[i]));
+        }
+        else if (std::holds_alternative<std::vector<char>>(contents[i].entries)) {
+            row.push_back(tokens[i][0]);
+        }
+        else if (std::holds_alternative<std::vector<std::string>>(contents[i].entries)) {
+            row.push_back(tokens[i]);
+        }
+        else {
+            std::cout << "type is not supported\n";
+            throw(1);
+        }
+
+    }
+
+    add_new_row(row);
+
+
+    
+}
+void table::add_new_row(std::vector<entry> row) {
+    size_t i = 0;
+    for (; i < row.size(); ++i) {
+        contents[i].entries = std::visit([row, i]<class T>(std::vector<T>& current_col_entries) -> var_vec {
+
+            current_col_entries.push_back(std::get<T>(row[i]));
+
+
+            return current_col_entries;
+        }, contents[i].entries);
     }
 }

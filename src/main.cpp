@@ -1,4 +1,4 @@
-/*
+
 #include "../include/table.hpp"
 #include <iostream>
 
@@ -24,18 +24,31 @@ int main() {
 
     std::vector<column> contents{ci, cd, cc};
 
-    std::string statement = "INT int_col PK, DOUBLE dob_col, CHAR ch_col, STR str_col";
-    table t(contents, primary_key);
-    std::string read_statement = "int_col > 1)dob_col > 5.23)char_col == D)int_col > 100";
+    std::string create_statement = "INT int_col PK,DOUBLE dob_col,CHAR char_col,STR str_col";
+
+    std::string update_statement1 = "6,1.3,B,hello world";
+    std::string update_statement2 = "150,16502.3541541,E,bye world";
+    std::string update_statement3 = "83,1287.0202,a,ldkhlasdh";
+    std::string update_statement4 = "57198723,17263.3312573,l,jhnLKJH lJH KLGH KJY FV";
+
+   
+    table t(create_statement);
+    t.update_table(update_statement1);
+    t.update_table(update_statement2);
+    t.update_table(update_statement3);
+    t.update_table(update_statement4);
+
+    // table t(contents, primary_key);
+    // t.print_table();
+    
+    std::string read_statement = "int_col >= 150)dob_col < 16000)char_col == a)str_col != hello world";
     table *result = t.read_table(read_statement);
 
     result->print_table();
-    // contents = t.get_contents();
-    // contents[cd] = {e1d, e2d};
-    //  std::cout << std::get<double>(contents.at(cd)[0].value) << '\n';
+    
 
     delete result;
+    
 
     return 0;
 }
-*/

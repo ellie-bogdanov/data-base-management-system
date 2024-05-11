@@ -1,4 +1,4 @@
-
+/*
 #include "../include/table.hpp"
 #include <iostream>
 
@@ -41,14 +41,15 @@ int main() {
 
     // table t(contents, primary_key);
     // t.print_table();
-    /*
+
     std::string read_statement = "int_col >= 150)dob_col < 16000)char_col == a)str_col != hello world";
     table *result = t.read_table(read_statement);
 
     result->print_table();
 
     delete result;
-    */
+
 
     return 0;
 }
+*/

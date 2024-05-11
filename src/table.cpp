@@ -129,8 +129,6 @@ std::vector<column> table::get_contents() const {
     return contents;
 }
 
-
-
 bool table::make_result_column(column &column_to_add, const column &compare_column_itr, const entry rvalue, std::string op) {
     bool is_empty_flag = true;
     std::visit([rvalue, op, &column_to_add, &is_empty_flag]<class T>(const std::vector<T> &compare_column_entries) {

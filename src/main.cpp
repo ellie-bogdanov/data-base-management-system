@@ -36,16 +36,19 @@ int main() {
     t.update_table(update_statement2);
     t.update_table(update_statement3);
     t.update_table(update_statement4);
+    t.drop_row(3);
+    t.print_table();
 
     // table t(contents, primary_key);
     // t.print_table();
-
+    /*
     std::string read_statement = "int_col >= 150)dob_col < 16000)char_col == a)str_col != hello world";
     table *result = t.read_table(read_statement);
 
     result->print_table();
 
     delete result;
+    */
 
     return 0;
 }

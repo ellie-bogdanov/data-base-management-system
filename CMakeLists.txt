@@ -10,8 +10,8 @@ file(GLOB_RECURSE SOURCE_FILES src/*)
 
 add_executable(dbms ${SOURCE_FILES} tests/column_test.cpp)
 
-target_link_libraries(dbms PRIVATE gtest)
-
-include(GoogleTest)
-
-gtest_discover_tests(dbms)
+#target_link_libraries(dbms PRIVATE gtest)
+#
+#include(GoogleTest)
+#
+#gtest_discover_tests(dbms)

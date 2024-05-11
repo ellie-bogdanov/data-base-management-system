@@ -90,6 +90,8 @@ public:
     // parse the update statement into tokens and parse them into the right type
     void update_table(const std::string &statement);
 
+    void drop_row(size_t index);
+
     // add a specific row from a given table
     void add_row_from_table(const table &original_table, size_t row_index);
 

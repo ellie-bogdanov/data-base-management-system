@@ -334,3 +334,14 @@ void table::add_new_row(std::vector<entry> row) {
                                          contents[i].entries);
     }
 }
+
+void table::drop_row(size_t index) {
+
+    std::for_each(contents.begin(), contents.end(), [index](column &col) {
+        col.entries = std::visit([index]<class T>(std::vector<T> entries) -> var_vec {
+            entries.erase(entries.begin() + index);
+            return entries;
+        },
+                                 col.entries);
+    });
+}

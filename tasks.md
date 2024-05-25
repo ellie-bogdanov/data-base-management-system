@@ -1,9 +1,10 @@
 # Tasks
 
 ## 25/05/2024
-~~1. fix the bug with the logger to include integers and doubles~~
-2. in dbms.cpp implement a working destructor
-3. add transaction logs to every command ran by the user
-4. implement data storage for tables
-5. implement data storage for data bases
-6. implemenbt recovery mechanisms
+- [x] fix the bug with the logger to include integers and doubles
+- [ ] add transaction logs to every command ran by the user
+- [ ] add database class that will store related tables
+- [ ] implement data storage on file for tables
+- [ ] implement data storage on file for data bases
+- [ ] implement data storage on file for the whole dbms 
+- [ ] implemenbt recovery mechanisms

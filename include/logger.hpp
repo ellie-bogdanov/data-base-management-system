@@ -7,8 +7,6 @@
 #include "../file_paths/logger_file_paths.hpp"
 
 struct logger {
-    // const std::ofstream log_file_output;
-    // const std::ifstream log_file_input;
     std::string full_path;
     std::string file_name;
     std::string file_extension;

@@ -34,7 +34,7 @@ int main() {
     std::string update_statement4 =
         "57198723,17263.3312573,l,jhnLKJH lJH KLGH KJY FV";
 
-    table t(create_statement, "first_table");
+    table t(create_statement, "first_table", 1);
     t.update_table(update_statement1);
     t.update_table(update_statement2);
     t.update_table(update_statement3);

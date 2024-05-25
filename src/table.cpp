@@ -1,6 +1,8 @@
 #include "../include/table.hpp"
 
 #include <algorithm>
+#include <chrono>
+#include <ctime>
 #include <execution>
 #include <iostream>
 #include <iterator>
@@ -33,11 +35,12 @@ entry column::get_entry(size_t entry_index) const {
         entries);
 }
 
-table::table(const std::vector<column> &contents, column *primary_key)
-    : contents(contents), primary_key(primary_key) {}
+table::table(const std::vector<column> &contents, column *primary_key,
+             size_t id)
+    : contents(contents), primary_key(primary_key), id(id) {}
 
-table::table(const table &copy_table, const std::string &table_name)
-    : table_name(table_name) {
+table::table(const table &copy_table, const std::string &table_name, size_t id)
+    : table_name(table_name), id(id) {
     primary_key = new column(copy_table.primary_key->name,
                              copy_table.primary_key->entries);
     contents = copy_table.contents;
@@ -50,8 +53,9 @@ table::table() {
 
 table::~table() { delete primary_key; }
 
-table::table(const std::string &create_statement, const std::string &table_name)
-    : table_name(table_name) {
+table::table(const std::string &create_statement, const std::string &table_name,
+             size_t id)
+    : table_name(table_name), id(id) {
     state_logger = logger(table_name);
     primary_key = nullptr;
     // std::vector<column> contents;
@@ -361,6 +365,9 @@ size_t table::get_table_id() const { return id; }
 std::string table::get_table_name() const { return table_name; }
 
 void table::log_current_state() {
+    auto givetime =
+        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    state_logger.log_message(std::string("date: ") + ctime(&givetime));
     std::for_each(
         contents.begin(), contents.end(), [this](const column &current_col) {
             state_logger.log_message(current_col.name, '\n');
@@ -388,3 +395,5 @@ void table::log_current_state() {
         });
     state_logger.log_message("\n");
 }
+
+size_t table::get_id() const { return id; }

@@ -64,15 +64,16 @@ class table {
 
     const static char UPDATE_DELIM = ',';
     // creating a table by providing an existing map mostly for debug purposes
-    table(const std::vector<column> &contents, column *primary_key);
+    table(const std::vector<column> &contents, column *primary_key, size_t id);
 
     // intended way of creating a table by the user with the following syntax:
     // column_type column_name PK, column_type column_name; etc... must be
     // exactly one section that ends with PK to tell which column is the primary
     // key
-    table(const std::string &create_statement, const std::string &table_name);
+    table(const std::string &create_statement, const std::string &table_name,
+          size_t id);
 
-    table(const table &copy_table, const std::string &table_name);
+    table(const table &copy_table, const std::string &table_name, size_t id);
 
     table();
 
@@ -106,4 +107,6 @@ class table {
     void print_table() const;
 
     void log_current_state();
+
+    size_t get_id() const;
 };

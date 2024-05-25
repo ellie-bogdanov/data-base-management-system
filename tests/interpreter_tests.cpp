@@ -13,7 +13,9 @@ TEST(interpreter_tests, infix_to_postfix) {
     GTEST_ASSERT_EQ(postfix, postfix_test);
 }
 
+/*
 int main(int argc, char *argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
+*/

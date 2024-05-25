@@ -3,19 +3,16 @@
 #include "common.hpp"
 #include "table.hpp"
 
-class dbms
-{
-private:
-    std::unordered_map<std::string, table*> tables;
+class dbms {
+   private:
+    std::unordered_map<std::string, table *> tables;
 
-public:
+   public:
     dbms();
-    dbms(const std::vector<table*> &tables);
+    dbms(const std::vector<table *> &tables);
     ~dbms();
 
     table *const get_table(const std::string &name) const;
     void add_table(table *table_to_add);
-    table drop_table(const std::string& table_name);
-
-    
+    table drop_table(const std::string &table_name);
 };

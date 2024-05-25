@@ -5,8 +5,7 @@
 #include "interpreter.hpp"
 
 // single column in the table, it is a key in a map to a vector of entries value
-struct column
-{
+struct column {
     std::string name;
     var_vec entries;
 
@@ -14,14 +13,13 @@ struct column
     column();
 
     // < operator for the map compatison, only compares the names
-    bool operator<(const column &compare_col) const
-    {
+    bool operator<(const column &compare_col) const {
         return name < compare_col.name;
     }
 
-    // == operator for comparing columns in order to perform operations only compares string names
-    bool operator==(const column &compare_col) const
-    {
+    // == operator for comparing columns in order to perform operations only
+    // compares string names
+    bool operator==(const column &compare_col) const {
         return name == compare_col.name && entries == compare_col.entries;
     }
 
@@ -32,22 +30,30 @@ struct column
     void print_column() const;
 };
 
-// the table consists of a std::map with a column key and a vector of entries as it's value
-class table
-{
-private:
+// the table consists of a std::map with a column key and a vector of entries as
+// it's value
+class table {
+   private:
     // the table itself
     std::vector<column> contents;
     column *primary_key;
     size_t id;
     std::string table_name;
 
-    // pushed the whole row from contents into a provided map with the index of said row
-    static bool make_result_column(column &column_to_add, const column &compare_column_itr, const entry rvalue, std::string op);
-    void add_matching_rows(table &table_to_mod, const std::vector<column>::const_iterator &compare_column, const entry rvalue, std::string op, std::vector<size_t> &captured_row_indicies) const;
+    // pushed the whole row from contents into a provided map with the index of
+    // said row
+    static bool make_result_column(column &column_to_add,
+                                   const column &compare_column_itr,
+                                   const entry rvalue, std::string op);
+    void add_matching_rows(
+        table &table_to_mod,
+        const std::vector<column>::const_iterator &compare_column,
+        const entry rvalue, std::string op,
+        std::vector<size_t> &captured_row_indicies) const;
 
-public:
-    // delimiter for reading from table statements
+   public:
+    logger state_logger;
+    //  delimiter for reading from table statements
     const static char READ_DELIM = ')';
 
     // delimiter for create statements seperates creation of columns
@@ -60,8 +66,10 @@ public:
     // creating a table by providing an existing map mostly for debug purposes
     table(const std::vector<column> &contents, column *primary_key);
 
-    // intended way of creating a table by the user with the following syntax: column_type column_name PK, column_type column_name; etc...
-    // must be exactly one section that ends with PK to tell which column is the primary key
+    // intended way of creating a table by the user with the following syntax:
+    // column_type column_name PK, column_type column_name; etc... must be
+    // exactly one section that ends with PK to tell which column is the primary
+    // key
     table(const std::string &create_statement, const std::string &table_name);
 
     table(const table &copy_table, const std::string &table_name);
@@ -78,9 +86,10 @@ public:
     std::vector<column> get_contents() const;
     int change_primary_key(column *new_key);
 
-    // reading from the table. the read statement must be of this syntax: column_name comparison_operator rvalue) column_name comparison_operator rvalue
-    // each end of section must be seperated by ')'
-    // example: my_double_col >= 4.5) my_char_col > D
+    // reading from the table. the read statement must be of this syntax:
+    // column_name comparison_operator rvalue) column_name comparison_operator
+    // rvalue each end of section must be seperated by ')' example:
+    // my_double_col >= 4.5) my_char_col > D
     table *read_table(const std::string &statement) const;
 
     // parse the update statement into tokens and parse them into the right type
@@ -96,5 +105,5 @@ public:
 
     void print_table() const;
 
-    void log_current_state() const;
+    void log_current_state();
 };

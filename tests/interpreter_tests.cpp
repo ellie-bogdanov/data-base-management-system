@@ -1,12 +1,14 @@
 
-#include "../include/interpreter.hpp"
 #include <gtest/gtest.h>
 
-TEST(interpreter_tests, infix_to_postfix) {
+#include "../include/interpreter.hpp"
 
-    std::vector<std::string> infix = {"a", "&", "(", "b", "||", "c", ")", "&", "d"};
+TEST(interpreter_tests, infix_to_postfix) {
+    std::vector<std::string> infix = {"a", "&", "(", "b", "||",
+                                      "c", ")", "&", "d"};
     std::vector<std::string> postfix;
-    std::vector<std::string> postfix_test = {"a", "b", "c", "||", "&", "d", "&"};
+    std::vector<std::string> postfix_test = {"a", "b", "c", "||",
+                                             "&", "d", "&"};
 
     interpreter::infix_to_postfix(infix, postfix);
 

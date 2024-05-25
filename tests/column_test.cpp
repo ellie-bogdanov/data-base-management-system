@@ -1,7 +1,9 @@
 
-#include "../include/table.hpp"
 #include <gtest/gtest.h>
+
 #include <random>
+
+#include "../include/table.hpp"
 
 int rnd_int(int start_range, int end_range) {
     std::random_device dev;
@@ -18,9 +20,7 @@ int rnd_double(int start_range, int end_range) {
     return dist(rng);
 }
 
-entry get_entry_test(size_t index, column &col) {
-    return col.get_entry(index);
-}
+entry get_entry_test(size_t index, column &col) { return col.get_entry(index); }
 
 TEST(entry_test, get_entry_test) {
     std::vector<int> int_vec;
@@ -48,10 +48,14 @@ TEST(entry_test, get_entry_test) {
 
     size_t rand_index = rnd_int(0, 999);
 
-    GTEST_ASSERT_EQ(std::get<int>(get_entry_test(rand_index, int_col)), int_vec[rand_index]);
-    GTEST_ASSERT_EQ(std::get<double>(get_entry_test(rand_index, double_col)), double_vec[rand_index]);
-    GTEST_ASSERT_EQ(std::get<char>(get_entry_test(rand_index, char_col)), char_vec[rand_index]);
-    GTEST_ASSERT_EQ(std::get<std::string>(get_entry_test(rand_index, str_col)), str_vec[rand_index]);
+    GTEST_ASSERT_EQ(std::get<int>(get_entry_test(rand_index, int_col)),
+                    int_vec[rand_index]);
+    GTEST_ASSERT_EQ(std::get<double>(get_entry_test(rand_index, double_col)),
+                    double_vec[rand_index]);
+    GTEST_ASSERT_EQ(std::get<char>(get_entry_test(rand_index, char_col)),
+                    char_vec[rand_index]);
+    GTEST_ASSERT_EQ(std::get<std::string>(get_entry_test(rand_index, str_col)),
+                    str_vec[rand_index]);
 }
 
 /*

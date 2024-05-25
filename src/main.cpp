@@ -1,11 +1,10 @@
 
-#include "../include/table.hpp"
 #include <iostream>
+
 #include "../include/dbms.hpp"
+#include "../include/table.hpp"
 
-int main()
-{
-
+int main() {
     int e1i(1);
     int e2i(5);
 
@@ -26,12 +25,14 @@ int main()
 
     std::vector<column> contents{ci, cd, cc};
 
-    std::string create_statement = "INT int_col PK,DOUBLE dob_col,CHAR char_col,STR str_col";
+    std::string create_statement =
+        "INT int_col PK,DOUBLE dob_col,CHAR char_col,STR str_col";
 
     std::string update_statement1 = "6,1.3,B,hello world";
     std::string update_statement2 = "150,16502.3541541,E,bye world";
     std::string update_statement3 = "83,1287.0202,a,ldkhlasdh";
-    std::string update_statement4 = "57198723,17263.3312573,l,jhnLKJH lJH KLGH KJY FV";
+    std::string update_statement4 =
+        "57198723,17263.3312573,l,jhnLKJH lJH KLGH KJY FV";
 
     table t(create_statement, "first_table");
     t.update_table(update_statement1);
@@ -44,7 +45,8 @@ int main()
     // table t(contents, primary_key);
     // t.print_table();
 
-    std::string read_statement = "int_col >= 150)dob_col < 16000)char_col == a)str_col != hello world";
+    std::string read_statement =
+        "int_col >= 150)dob_col < 16000)char_col == a)str_col != hello world";
     table *result = t.read_table(read_statement);
 
     result->print_table();

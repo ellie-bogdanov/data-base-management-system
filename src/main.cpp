@@ -1,8 +1,10 @@
-/*
+
 #include "../include/table.hpp"
 #include <iostream>
+#include "../include/dbms.hpp"
 
-int main() {
+int main()
+{
 
     int e1i(1);
     int e2i(5);
@@ -31,7 +33,7 @@ int main() {
     std::string update_statement3 = "83,1287.0202,a,ldkhlasdh";
     std::string update_statement4 = "57198723,17263.3312573,l,jhnLKJH lJH KLGH KJY FV";
 
-    table t(create_statement);
+    table t(create_statement, "first_table");
     t.update_table(update_statement1);
     t.update_table(update_statement2);
     t.update_table(update_statement3);
@@ -46,10 +48,12 @@ int main() {
     table *result = t.read_table(read_statement);
 
     result->print_table();
+    dbms d({result});
+    d.add_table(&t);
+    d.get_table("first_table")->print_table();
 
+    t.log_current_state();
     delete result;
-
 
     return 0;
 }
-*/

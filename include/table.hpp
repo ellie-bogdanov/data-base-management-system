@@ -5,7 +5,8 @@
 #include "interpreter.hpp"
 
 // single column in the table, it is a key in a map to a vector of entries value
-struct column {
+struct column
+{
     std::string name;
     var_vec entries;
 
@@ -13,12 +14,14 @@ struct column {
     column();
 
     // < operator for the map compatison, only compares the names
-    bool operator<(const column &compare_col) const {
+    bool operator<(const column &compare_col) const
+    {
         return name < compare_col.name;
     }
 
     // == operator for comparing columns in order to perform operations only compares string names
-    bool operator==(const column &compare_col) const {
+    bool operator==(const column &compare_col) const
+    {
         return name == compare_col.name && entries == compare_col.entries;
     }
 
@@ -30,13 +33,16 @@ struct column {
 };
 
 // the table consists of a std::map with a column key and a vector of entries as it's value
-class table {
+class table
+{
 private:
     // the table itself
     std::vector<column> contents;
     column *primary_key;
-    // pushed the whole row from contents into a provided map with the index of said row
+    size_t id;
+    std::string table_name;
 
+    // pushed the whole row from contents into a provided map with the index of said row
     static bool make_result_column(column &column_to_add, const column &compare_column_itr, const entry rvalue, std::string op);
     void add_matching_rows(table &table_to_mod, const std::vector<column>::const_iterator &compare_column, const entry rvalue, std::string op, std::vector<size_t> &captured_row_indicies) const;
 
@@ -56,13 +62,16 @@ public:
 
     // intended way of creating a table by the user with the following syntax: column_type column_name PK, column_type column_name; etc...
     // must be exactly one section that ends with PK to tell which column is the primary key
-    table(const std::string &create_statement);
+    table(const std::string &create_statement, const std::string &table_name);
 
-    table(const table &copy_table);
+    table(const table &copy_table, const std::string &table_name);
 
     table();
 
     ~table();
+
+    size_t get_table_id() const;
+    std::string get_table_name() const;
 
     void copy_empty_columns(const std::vector<column> &columns);
     column *const get_primary_key() const;
@@ -86,4 +95,6 @@ public:
     void add_new_row(std::vector<entry> row);
 
     void print_table() const;
+
+    void log_current_state() const;
 };

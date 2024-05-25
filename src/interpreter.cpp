@@ -75,3 +75,7 @@ void interpreter::infix_to_postfix(const std::vector<std::string> &infix, std::v
         intermidiate.pop();
     }
 }
+
+std::unordered_map<std::string, std::string> interpreter::parse_statement(const std::string &statement) {
+    // TODO: finish
+}

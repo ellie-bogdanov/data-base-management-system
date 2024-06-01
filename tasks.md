@@ -10,3 +10,11 @@
 - [ ] implement data storage on file for the whole dbms
 - [ ] implemenbt recovery mechanisms
 
+## 01/06/2024
+- [ ] implement b-tree
+- [ ] implement data storage on file for tables
+- [ ] add user input system
+- [ ] add transaction logs to every command ran by the user
+- [ ] implemenbt recovery mechanisms
+
+

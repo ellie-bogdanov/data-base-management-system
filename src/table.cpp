@@ -375,15 +375,9 @@ void table::log_current_state() {
             std::visit(
                 [&entries_to_log]<class T>(const std::vector<T> &entries) {
                     for (const T current_entry : entries) {
-                        std::variant<int, double> non_str_entry;
-                        if constexpr (std::is_same<T, int>::value) {
-                            non_str_entry = current_entry;
-                            entries_to_log +=
-                                std::to_string(std::get<int>(non_str_entry));
-                        } else if constexpr (std::is_same<T, double>::value) {
-                            non_str_entry = current_entry;
-                            entries_to_log +=
-                                std::to_string(std::get<double>(non_str_entry));
+                        if constexpr (std::is_same<T, int>::value ||
+                                      std::is_same<T, double>::value) {
+                            entries_to_log += std::to_string(current_entry);
                         } else {
                             entries_to_log += current_entry;
                         }

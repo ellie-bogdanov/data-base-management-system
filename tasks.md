@@ -7,6 +7,6 @@
 - [ ] add database class that will store related tables
 - [ ] implement data storage on file for tables
 - [ ] implement data storage on file for data bases
-- [ ] implement data storage on file for the whole dbms 
+- [ ] implement data storage on file for the whole dbms
 - [ ] implemenbt recovery mechanisms
 

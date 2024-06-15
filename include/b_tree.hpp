@@ -1,31 +1,49 @@
 #pragma once
+#include <algorithm>
 #include <array>
-
-#include "common.hpp"
+#include <iostream>
+#include <queue>
+#include <stack>
+#include <vector>
 
 struct node {
-    constexpr static size_t MIN_CHILDREN = 2;  // the degree also known as 't'
-    constexpr static size_t MIN_KEYS = MIN_CHILDREN - 1;
-    constexpr static size_t MAX_KEYS = MIN_CHILDREN * 2 - 1;
-    constexpr static size_t MAX_CHILDREN = MAX_KEYS + 1;
-    size_t current_num_of_keys;
-    size_t current_num_of_children;
-    std::array<node*, MAX_CHILDREN> children;
-    std::array<int, MAX_KEYS> keys;
-    node* parent;
-    node(int key, node* parent);
-    ~node();
-    void insert_non_full(int key);
-    void split_children(node* parent);
+    constexpr static int MAX_KEYS = 4;
+    constexpr static int MIN_KEYS = 2;
+    constexpr static int MAX_CHILDREN = 5;
 
-   private:
-    void insert_children(node* original_child, node* right_child);
+    int current_children_size;
+    int current_key_size;
+
+    bool is_root;
+
+    std::array<int, MAX_KEYS + 1> keys;
+    std::array<node*, MAX_CHILDREN + 1> children;
+
+    node(bool is_root);
+    ~node();
+
+    void insert_key_non_full(int key);
+    node* split_children();
+    void insert_child(node* child);
+    node* split_root();
+    int find_median_key(int key_to_add) const;
 };
 
 struct b_tree {
+   private:
+    // assumes first call with current_node as a leaf
+    void insert_and_split(int key, node* current_node);
+    // assumes first call with root node
+    node* find_key_range_leaf(int key, node* current_node);
+
+   public:
     node* root;
+    std::stack<node*> path_stack;
 
     b_tree();
     ~b_tree();
-    void insert(int key, node* current_node, node* parent);
+
+    void insert_key(int key);
+
+    void print_tree();
 };

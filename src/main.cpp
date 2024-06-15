@@ -1,6 +1,7 @@
 
 #include <iostream>
 
+#include "../include/b_tree.hpp"
 #include "../include/dbms.hpp"
 #include "../include/table.hpp"
 
@@ -56,6 +57,19 @@ int main() {
 
     t.log_current_state();
     delete result;
+
+    b_tree tree;
+    tree.insert(8, tree.root);
+    tree.insert(9, tree.root);
+    tree.insert(10, tree.root);
+    tree.insert(11, tree.root);
+    tree.insert(15, tree.root);
+    tree.insert(16, tree.root);
+    tree.insert(17, tree.root);
+    tree.insert(18, tree.root);
+    tree.insert(20, tree.root);
+    tree.insert(23, tree.root);
+    tree.traverse(tree.root);
 
     return 0;
 }

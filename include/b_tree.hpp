@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <array>
+#include <fstream>
 #include <iostream>
 #include <queue>
 #include <stack>
@@ -27,6 +28,9 @@ struct node {
     void insert_child(node* child);
     node* split_root();
     int find_median_key(int key_to_add) const;
+
+    static void serialize(node* ser_node, std::ofstream& out);
+    static void deserialize(node*& des_node, std::ifstream& in);
 };
 
 struct b_tree {
@@ -37,13 +41,17 @@ struct b_tree {
     node* find_key_range_leaf(int key, node* current_node);
 
    public:
+    std::string name;
     node* root;
     std::stack<node*> path_stack;
 
-    b_tree();
+    b_tree(std::string name);
     ~b_tree();
 
     void insert_key(int key);
 
     void print_tree();
+
+    static void serialize(b_tree& tree);
+    static b_tree deserialize(std::string file_name);
 };

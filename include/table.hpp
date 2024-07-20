@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <fstream>
+
 #include "common.hpp"
 #include "interpreter.hpp"
 
@@ -10,6 +12,7 @@ struct column {
     var_vec entries;
 
     column(const std::string &name, const var_vec &entries);
+
     column();
 
     // < operator for the map compatison, only compares the names
@@ -28,6 +31,9 @@ struct column {
     entry get_entry(size_t entry_index) const;
 
     void print_column() const;
+
+    static void serialize(const column &col, std::ofstream &out);
+    static void deserialize(column &col, std::ifstream &in);
 };
 
 // the table consists of a std::map with a column key and a vector of entries as
@@ -51,6 +57,10 @@ class table {
         const entry rvalue, std::string op,
         std::vector<size_t> &captured_row_indicies) const;
 
+    void set_id(size_t id);
+    void set_name(std::string name);
+    void set_primary_key(column *pk);
+
    public:
     logger state_logger;
     //  delimiter for reading from table statements
@@ -63,8 +73,8 @@ class table {
     const static char COL_CREATE_DELIM = ' ';
 
     const static char UPDATE_DELIM = ',';
-    // creating a table by providing an existing map mostly for debug purposes
-    table(const std::vector<column> &contents, column *primary_key, size_t id);
+    table(const std::vector<column> &contents, column *primary_key, size_t id,
+          const std::string &table_name);
 
     // intended way of creating a table by the user with the following syntax:
     // column_type column_name PK, column_type column_name; etc... must be
@@ -109,4 +119,7 @@ class table {
     void log_current_state();
 
     size_t get_id() const;
+
+    static void serialize(table &serialize_table);
+    static table *deserialize(size_t table_id);
 };

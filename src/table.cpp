@@ -36,8 +36,11 @@ entry column::get_entry(size_t entry_index) const {
 }
 
 table::table(const std::vector<column> &contents, column *primary_key,
-             size_t id)
-    : contents(contents), primary_key(primary_key), id(id) {}
+             size_t id, const std::string &table_name)
+    : contents(contents),
+      primary_key(primary_key),
+      id(id),
+      table_name(table_name) {}
 
 table::table(const table &copy_table, const std::string &table_name, size_t id)
     : table_name(table_name), id(id) {
@@ -50,6 +53,8 @@ table::table() {
     primary_key = nullptr;
     table_name = "temp_table";
 }
+
+void table::set_id(size_t id) { this->id = id; }
 
 table::~table() { delete primary_key; }
 
@@ -391,3 +396,146 @@ void table::log_current_state() {
 }
 
 size_t table::get_id() const { return id; }
+
+void column::serialize(const column &col, std::ofstream &out) {
+    size_t size_of_name = col.name.size();
+    out.write(reinterpret_cast<const char *>(&size_of_name),
+              sizeof(size_of_name));
+    out.write(col.name.c_str(), size_of_name);
+
+    size_t entry_type = col.entries.index();
+    out.write(reinterpret_cast<char *>(&entry_type), sizeof(entry_type));
+
+    std::visit(
+        [&out]<class T>(const std::vector<T> &vec_type) {
+            size_t entry_amount = vec_type.size();
+            out.write(reinterpret_cast<char *>(&entry_amount),
+                      sizeof(entry_amount));
+        },
+        col.entries);
+
+    std::visit(
+        [&out]<class T>(const std::vector<T> &vec_type) {
+            for (T current_entry : vec_type) {
+                if constexpr (std::is_same<T, std::string>::value) {
+                    std::string str_entry = current_entry;
+                    size_t str_length = str_entry.size();
+
+                    out.write(reinterpret_cast<char *>(&str_length),
+                              sizeof(str_length));
+                    out.write(str_entry.c_str(), str_length);
+                } else {
+                    out.write(reinterpret_cast<char *>(&current_entry),
+                              sizeof(current_entry));
+                }
+            }
+        },
+        col.entries);
+}
+
+void column::deserialize(column &col, std::ifstream &in) {
+    size_t size_of_name = 0;
+    in.read(reinterpret_cast<char *>(&size_of_name), sizeof(size_of_name));
+    col.name.resize(size_of_name);
+    in.read(&col.name[0], size_of_name);
+
+    size_t var_index = 0;
+    in.read(reinterpret_cast<char *>(&var_index), sizeof(var_index));
+
+    size_t amount_of_entries = 0;
+    in.read(reinterpret_cast<char *>(&amount_of_entries),
+            sizeof(amount_of_entries));
+
+    switch (var_index) {
+        case 0:
+            col.entries = std::vector<int>();
+            break;
+        case 1:
+            col.entries = std::vector<double>();
+            break;
+        case 2:
+            col.entries = std::vector<char>();
+            break;
+        case 3:
+            col.entries = std::vector<std::string>();
+            break;
+        default:
+            std::cout << "unknown var_index index: " << var_index;
+            break;
+    }
+    std::visit(
+        [&in, amount_of_entries]<class T>(std::vector<T> &entries) {
+            for (size_t i = 0; i < amount_of_entries; ++i) {
+                if constexpr (std::is_same<T, std::string>::value) {
+                    size_t string_len = 0;
+                    in.read(reinterpret_cast<char *>(&string_len),
+                            sizeof(string_len));
+                    std::string entry_str;
+                    entry_str.resize(string_len);
+                    in.read(&entry_str[0], string_len);
+                    entries.push_back(entry_str);
+                } else {
+                    T entry_to_add;
+                    in.read(reinterpret_cast<char *>(&entry_to_add),
+                            sizeof(entry_to_add));
+                    entries.push_back(entry_to_add);
+                }
+            }
+        },
+        col.entries);
+}
+
+void table::serialize(table &serialize_table) {
+    std::ofstream out(
+        "..\\dat_files\\" + std::to_string(serialize_table.id) + ".dat",
+        std::ios::binary);
+    out.write(reinterpret_cast<char *>(&serialize_table.id),
+              sizeof(serialize_table.id));
+
+    size_t name_length = serialize_table.table_name.size();
+    out.write(reinterpret_cast<char *>(&name_length), sizeof(name_length));
+
+    out.write(serialize_table.table_name.c_str(), name_length);
+
+    column::serialize(*serialize_table.primary_key, out);
+
+    size_t contents_size = serialize_table.contents.size();
+    out.write(reinterpret_cast<char *>(&contents_size), sizeof(contents_size));
+
+    for (column col : serialize_table.contents) {
+        column::serialize(col, out);
+    }
+
+    logger::serialize(serialize_table.state_logger, out);
+    out.close();
+}
+table *table::deserialize(size_t table_id) {
+    std::ifstream in("..\\dat_files\\" + std::to_string(table_id) + ".dat",
+                     std::ios::binary);
+    size_t id;
+    in.read(reinterpret_cast<char *>(&id), sizeof(id));
+    size_t name_length = 0;
+    in.read(reinterpret_cast<char *>(&name_length), sizeof(name_length));
+    std::string table_name;
+    table_name.resize(name_length);
+    in.read(&table_name[0], name_length);
+    column primary_key;
+    column::deserialize(primary_key, in);
+    size_t contents_size = 0;
+    in.read(reinterpret_cast<char *>(&contents_size), sizeof(contents_size));
+    std::vector<column> contents;
+
+    for (size_t i = 0; i < contents_size; ++i) {
+        column col_to_add;
+        column::deserialize(col_to_add, in);
+        contents.push_back(col_to_add);
+    }
+    logger state_logger;
+    logger::deserialize(state_logger, in);
+    in.close();
+
+    column *p_primary_key = new column(primary_key.name, primary_key.entries);
+    table *p_table = new table(contents, p_primary_key, id, table_name);
+    p_table->state_logger = state_logger;
+    return p_table;
+}

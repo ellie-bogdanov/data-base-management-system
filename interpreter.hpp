@@ -4,7 +4,16 @@
 
 #include "common.hpp"
 namespace interpreter {
+
+    enum compare_operators{MT, LT, MOE, LOE, EQ};
     enum operators { AND, OR, LEFT_PAR, RIGHT_PAR };
+
+    struct column_comparison {
+        std::string col_name;
+        compare_operators op;
+        entry compare_to;
+    };
+
     const std::unordered_map<std::string, operators> operator_map = {
         {"&", operators::AND},
         {"||", operators::OR},

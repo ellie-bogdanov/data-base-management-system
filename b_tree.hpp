@@ -1,46 +1,53 @@
 #pragma once
-#include <array>
-#include <fstream>
-#include <stack>
+
 #include "common.hpp"
-#include "table.hpp"
+
+#include <fstream>
+#include <queue>
+#include <stack>
+
+using key_size_pair = std::pair<size_t, size_t>;
 
 struct node {
-    constexpr static int MAX_KEYS = 4;
-    constexpr static int MIN_KEYS = 2;
-    constexpr static int MAX_CHILDREN = 5;
+    constexpr static size_t MAX_KEYS = 4;
+    constexpr static size_t MIN_KEYS = 2;
+    constexpr static size_t MAX_CHILDREN = 5;
 
-    int current_children_size;
-    int current_key_size;
-
+    size_t current_children_size;
+    size_t current_key_size;
 
     bool is_root;
 
-    std::array<int, MAX_KEYS + 1> offsets;
-    std::array<int, MAX_KEYS + 1> keys;
+
+    std::array<key_size_pair, MAX_KEYS + 1> keys;
     std::array<node*, MAX_CHILDREN + 1> children;
 
     node(bool is_root);
+    node();
+ 
     ~node();
 
-    void insert_key_non_full(int key, int offset);
+    void insert_key_non_full(size_t key, size_t table_size);
     node* split_children();
     void insert_child(node* child);
     node* split_root();
-    int find_median_key(int key_to_add) const;
+    key_size_pair find_median_key(size_t key_to_add) const;
 
-    static void serialize(node* ser_node, std::ofstream& out);
-    static void deserialize(node*& des_node, std::ifstream& in);
+
+    
+    void serialize(std::ofstream& out);
+    void deserialize(std::ifstream& in);
+    
+
 };
 
 struct b_tree {
 private:
     // assumes first call with current_node as a leaf
-    void insert_and_split(int key, int offset, node* current_node);
+    void insert_and_split(key_size_pair key, node* current_node);
     // assumes first call with root node
-    node* find_key_range_leaf(int key, node* current_node);
-
-    int amount_of_keys;
+    node* find_key_range_leaf(size_t key, node* current_node);
+    size_t calc_bytes_until_key(size_t key, node* current_node, size_t path_size = 0);
 
 public:
     std::string name;
@@ -51,10 +58,13 @@ public:
     b_tree();
     ~b_tree();
 
-    void insert_key(int key);
+    void insert_key(key_size_pair key);
 
     void print_tree();
 
-    static void serialize(b_tree& tree, std::ofstream &out);
-    static b_tree deserialize(std::string file_name);
+    size_t calc_bytes_until_key(size_t key);
+    
+    void serialize(std::ofstream& out);
+    void deserialize(std::ifstream& in);
+    
 };

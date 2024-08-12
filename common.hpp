@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+#include <array>
+#include <set>
 
 #include "logger.hpp"
 #include "file_paths.hpp"

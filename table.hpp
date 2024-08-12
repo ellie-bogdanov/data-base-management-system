@@ -5,13 +5,22 @@
 
 #include "common.hpp"
 #include "interpreter.hpp"
+#include "serializer.hpp"
 
 // single column in the table, it is a key in a map to a vector of entries value
+enum entry_type {
+    INT,
+    DOUBLE,
+    CHAR,
+    STRING
+};
 struct column {
+    using col_name_type = std::pair<std::string, entry_type>;
     std::string name;
     var_vec entries;
 
     column(const std::string& name, const var_vec& entries);
+    column(const column& copy);
 
     column();
 
@@ -31,9 +40,12 @@ struct column {
     entry get_entry(size_t entry_index) const;
 
     void print_column() const;
-
+    /*
     static void serialize(const column& col, std::ofstream& out);
     static void deserialize(column& col, std::ifstream& in);
+    */
+    void serialize(std::ofstream& out) const;
+    void deserialize(std::ifstream& in);
 };
 
 // the table consists of a std::map with a column key and a vector of entries as
@@ -42,12 +54,12 @@ class table {
 private:
     // the table itself
     std::vector<column> contents;
-    column* primary_key;
     size_t id;
     std::string table_name;
 
     // pushed the whole row from contents into a provided map with the index of
     // said row
+
     static bool make_result_column(column& column_to_add,
         const column& compare_column_itr,
         const entry rvalue, std::string op);
@@ -59,7 +71,10 @@ private:
 
     void set_id(size_t id);
 
+    table(const std::vector<column>& contents, size_t id, const std::string& table_name);
 
+    void deserialize(std::ifstream& in);
+    
 public:
     logger state_logger;
     //  delimiter for reading from table statements
@@ -72,38 +87,32 @@ public:
     const static char COL_CREATE_DELIM = ' ';
 
     const static char UPDATE_DELIM = ',';
-    table(const std::vector<column>& contents, column* primary_key, size_t id,
-        const std::string& table_name);
+    table(const std::vector<column::col_name_type>& col_types_names, size_t pk_index,
+        const std::string& table_name, size_t id);
 
-    // intended way of creating a table by the user with the following syntax:
-    // column_type column_name PK, column_type column_name; etc... must be
-    // exactly one section that ends with PK to tell which column is the primary
-    // key
-    table(const std::string& create_statement, const std::string& table_name,
-        size_t id);
+    table(const table& copy);
 
-    table(const table& copy_table, const std::string& table_name, size_t id);
+    table(std::ifstream& in);
 
     table();
 
     ~table();
 
+    size_t get_table_size();
+
+
     size_t get_table_id() const;
     std::string get_table_name() const;
+    void change_pk(size_t new_pk_index);
 
     void copy_empty_columns(const std::vector<column>& columns);
-    column* const get_primary_key() const;
     std::vector<column> get_contents() const;
-    int change_primary_key(column* new_key);
 
     // reading from the table. the read statement must be of this syntax:
     // column_name comparison_operator rvalue) column_name comparison_operator
     // rvalue each end of section must be seperated by ')' example:
     // my_double_col >= 4.5) my_char_col > D
-    table* read_table(const std::string& statement) const;
-
-    // parse the update statement into tokens and parse them into the right type
-    void update_table(const std::string& statement);
+    table* read_table(std::vector<interpreter::column_comparison>& comparisons);
 
     void drop_row(size_t index);
 
@@ -119,6 +128,5 @@ public:
 
     size_t get_id() const;
 
-    static void serialize(table& serialize_table, std::ofstream& out);
-    static table* deserialize(std::string name);
+    void serialize(std::ofstream& out) const;
 };

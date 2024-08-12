@@ -131,9 +131,10 @@
     <ClCompile Include="b_tree.cpp" />
     <ClCompile Include="dbms.cpp" />
     <ClCompile Include="interpreter.cpp" />
-    <ClCompile Include="light_dbms.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="logger.cpp" />
     <ClCompile Include="table.cpp" />
+    <ClCompile Include="uid.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="b_tree.hpp" />
@@ -142,7 +143,9 @@
     <ClInclude Include="interpreter.hpp" />
     <ClInclude Include="logger.hpp" />
     <ClInclude Include="file_paths.hpp" />
+    <ClInclude Include="serializer.hpp" />
     <ClInclude Include="table.hpp" />
+    <ClInclude Include="uid.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

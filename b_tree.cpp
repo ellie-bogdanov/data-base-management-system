@@ -1,4 +1,5 @@
 #include "b_tree.hpp"
+#include <cassert>
 
 node::node(bool is_root) : is_root(is_root) {
     keys = {};
@@ -7,50 +8,54 @@ node::node(bool is_root) : is_root(is_root) {
     current_children_size = 0;
 }
 
+node::node() {
+    keys = {};
+    children = {};
+    current_key_size = 0;
+    current_children_size = 0;
+    is_root = false;
+}
+
 node::~node() {
     for (int i = 0; i < current_children_size; ++i) delete children[i];
 }
 
-b_tree::b_tree(std::string name) : name(name) { 
+b_tree::b_tree(std::string name) : name(name) { root = nullptr; }
+b_tree::b_tree() {
+    name = " ";
     root = nullptr;
-    amount_of_keys = 0;
 }
-
 b_tree::~b_tree() { delete root; }
 
-int node::find_median_key(int key_to_add) const {
-    int median_key = keys[(current_key_size / 2) - 1];
-    if (key_to_add > median_key && key_to_add < keys[current_key_size / 2])
-        median_key = key_to_add;
+key_size_pair node::find_median_key(size_t key_to_add) const {
+    key_size_pair median_key = keys[(current_key_size / 2) - 1];
+    if (key_to_add > median_key.first && key_to_add < keys[current_key_size / 2].first)
+        median_key.first = key_to_add;
     else {
         median_key = keys[current_key_size / 2];
     }
     return median_key;
 }
 
-void node::insert_key_non_full(int key, int offset) {
-
+void node::insert_key_non_full(size_t key, size_t table_size) {
     int i = current_key_size - 1;
-    while (i >= 0 && key < keys[i]) {
+    while (i >= 0 && key < keys[i].first) {
         keys[i + 1] = keys[i];
-        offsets[i + 1] = offsets[i];
         --i;
     }
 
-    keys[i + 1] = key;
-    offsets[i + 1] = offset;
+    keys[i + 1] = {key, table_size};
     current_key_size++;
 }
 
 node* node::split_children() {
-    std::array<int, MAX_KEYS + 1> less_than_key = {};
-    std::array<int, MAX_KEYS + 1> more_than_key = {};
-
-    int median_key = keys[node::MAX_KEYS / 2];
+    std::array<key_size_pair, MAX_KEYS + 1> less_than_key = {};
+    std::array<key_size_pair, MAX_KEYS + 1> more_than_key = {};
+    key_size_pair median_key = keys[node::MAX_KEYS / 2];
     std::partition_copy(
         keys.begin(), keys.begin() + current_key_size, less_than_key.begin(),
         more_than_key.begin(),
-        [median_key](int current_key) { return current_key <= median_key; });
+        [median_key](key_size_pair current_key) { return current_key.first <= median_key.first; });
 
     keys = less_than_key;
     current_key_size = (node::MAX_KEYS / 2);
@@ -60,12 +65,8 @@ node* node::split_children() {
     more_node->keys = more_than_key;
     more_node->current_key_size = (node::MAX_KEYS / 2);
     more_node->current_children_size = current_children_size;
-    for (int i = 0; i < more_node->current_key_size; ++i) {
-        more_node->offsets[i] = offsets[i + more_node->current_key_size + 1];
-    }
-
     for (int i = 0; i < more_node->current_children_size; ++i) {
-        more_node->children[i] = children[i + more_node->current_children_size];  
+        more_node->children[i] = children[i + more_node->current_children_size];
     }
 
     return more_node;
@@ -89,7 +90,6 @@ node* node::split_root() {
     node* new_root = new node(true);
     new_root->insert_child(this->split_children());
     new_root->keys[0] = this->keys[this->current_key_size];
-    new_root->offsets[0] = this->offsets[this->current_key_size];
     new_root->insert_child(this);
     new_root->current_key_size = 1;
 
@@ -100,8 +100,8 @@ node* node::split_root() {
     return new_root;
 }
 
-void b_tree::insert_and_split(int key, int offset, node* current_node) {
-    current_node->insert_key_non_full(key, offset);
+void b_tree::insert_and_split(key_size_pair key, node* current_node) {
+    current_node->insert_key_non_full(key.first, key.second);
     if (current_node->current_key_size > node::MAX_KEYS) {
         if (current_node->is_root) {
             root = root->split_root();
@@ -109,32 +109,74 @@ void b_tree::insert_and_split(int key, int offset, node* current_node) {
         }
         path_stack.pop();
         path_stack.top()->insert_child(current_node->split_children());
-        insert_and_split(current_node->keys[current_node->current_key_size], current_node->offsets[current_node->current_key_size],
+        insert_and_split(current_node->keys[current_node->current_key_size],
             path_stack.top());
     }
 }
 
-node* b_tree::find_key_range_leaf(int key, node* current_node) {
+node* b_tree::find_key_range_leaf(size_t key, node* current_node) {
     path_stack.push(current_node);
     if (current_node->current_children_size == 0) {
         return current_node;
     }
 
-    int i = 0;
-    while (i < current_node->current_key_size && key > current_node->keys[i])
+    size_t i = 0;
+    while (i < current_node->current_key_size && key > current_node->keys[i].first)
         ++i;
 
+    assert(current_node->current_key_size >= 0 && current_node->current_key_size <= 5);
+
     return find_key_range_leaf(key, current_node->children[i]);
+
 }
 
-void b_tree::insert_key(int key) {
+void b_tree::insert_key(key_size_pair key) {
     if (root == nullptr) {
         root = new node(true);
     }
-    amount_of_keys++;
-    find_key_range_leaf(key, root);
-    insert_and_split(key, amount_of_keys, path_stack.top());
+    find_key_range_leaf(key.first, root);
+    insert_and_split(key, path_stack.top());
     while (!path_stack.empty()) path_stack.pop();
+}
+
+size_t b_tree::calc_bytes_until_key(size_t key) {
+
+    return calc_bytes_until_key(key, root);
+         
+}
+
+size_t b_tree::calc_bytes_until_key(size_t key, node* current_node, size_t path_size) {
+    size_t i = 0;
+
+    while (i < node::MAX_KEYS - 1 && i < current_node->current_key_size && key > current_node->keys[i].first) {
+        path_size += current_node->keys[i].second;
+        ++i;
+    }
+
+
+
+    if (key == current_node->keys[i].first)
+        return path_size;
+
+
+    if (current_node->current_children_size == 0)
+        return 0;
+
+    while (i < node::MAX_KEYS - 1 && i < current_node->current_key_size) {
+        path_size += current_node->keys[i].second;
+        ++i;
+    }
+
+    path_size += current_node->keys[i].second;
+
+
+
+
+    return this->calc_bytes_until_key(key, current_node->children[i], path_size);
+
+
+    
+
 }
 
 void b_tree::print_tree() {
@@ -145,17 +187,14 @@ void b_tree::print_tree() {
 
     while (!tree_vec.empty()) {
         std::vector<node*> next_level;
-        for (int i = 0; i < tree_vec.size(); ++i) {
-            for (int j = 0; j < tree_vec[i]->current_children_size; ++j)
+        for (size_t i = 0; i < tree_vec.size(); ++i) {
+            for (size_t j = 0; j < tree_vec[i]->current_children_size; ++j)
                 next_level.push_back(tree_vec[i]->children[j]);
         }
 
-        for (int i = 0; i < tree_vec.size(); ++i) {
-            for (int j = 0; j < tree_vec[i]->current_key_size; ++j) {
-                std::cout << tree_vec[i]->keys[j] << ": ";
-                std::cout << tree_vec[i]->offsets[j] << ", ";
-            }
-
+        for (size_t i = 0; i < tree_vec.size(); ++i) {
+            for (size_t j = 0; j < tree_vec[i]->current_key_size; ++j)
+                std::cout << tree_vec[i]->keys[j].first << ", ";
         }
         std::cout << '\n';
 
@@ -163,99 +202,84 @@ void b_tree::print_tree() {
     }
 }
 
-void node::serialize(node* ser_node, std::ofstream& out) {
-    out.write(reinterpret_cast<char*>(&ser_node->current_key_size),
-        sizeof(ser_node->current_key_size));
-    out.write(reinterpret_cast<char*>(&ser_node->current_children_size),
-        sizeof(ser_node->current_children_size));
-    out.write(reinterpret_cast<char*>(&ser_node->is_root),
-        sizeof(ser_node->is_root));
 
-    for (int i = 0; i < ser_node->current_key_size; ++i) {
-        out.write(reinterpret_cast<char*>(&ser_node->keys[i]),
-            sizeof(ser_node->keys[i]));
- 
-        out.write(reinterpret_cast<char*>(&ser_node->offsets[i]),
-            sizeof(ser_node->offsets[i]));
-    }
-
-    if (ser_node->current_children_size == 0) {
+void b_tree::serialize(std::ofstream& out) {
+    if (root == nullptr)
         return;
-    }
-    else {
-        for (int i = 0; i < ser_node->current_children_size; ++i) {
-            node::serialize(ser_node->children[i], out);
-        }
-    }
-}
-void node::deserialize(node*& des_node, std::ifstream& in) {
-    int current_key_size = 0;
-    in.read(reinterpret_cast<char*>(&current_key_size),
-        sizeof(current_key_size));
-
-    int current_children_size = 0;
-    in.read(reinterpret_cast<char*>(&current_children_size),
-        sizeof(current_children_size));
-
-    bool is_root = false;
-    in.read(reinterpret_cast<char*>(&is_root), sizeof(is_root));
-
-    std::array<int, node::MAX_KEYS + 1> keys = {};
-    std::array<int, node::MAX_KEYS + 1> offsets = {};
-    for (int i = 0; i < current_key_size; ++i) {
-        int key = 0;
-        int offset = 0;
-        in.read(reinterpret_cast<char*>(&key), sizeof(key));
-        in.read(reinterpret_cast<char*>(&offset), sizeof(offset));
-        
-        keys[i] = key;
-        offsets[i] = offset;
-    }
-
-    des_node = new node(is_root);
-    des_node->keys = keys;
-    des_node->offsets = offsets;
-    des_node->current_key_size = current_key_size;
-    des_node->current_children_size = current_children_size;
-    for (int i = 0; i < current_children_size; ++i) {
-        node::deserialize(des_node->children[i], in);
-    }
-}
-
-void b_tree::serialize(b_tree& tree, std::ofstream &out) {
-    size_t name_len = tree.name.size();
+    
+    size_t name_len = name.size();
     out.write(reinterpret_cast<char*>(&name_len), sizeof(name_len));
+    out.write(name.c_str(), name_len);
 
-    out.write(tree.name.c_str(), name_len);
+    root->serialize(out);
+    
 
-    out.write(reinterpret_cast<char*>(&tree.amount_of_keys), sizeof(tree.amount_of_keys));
-
-    node::serialize(tree.root, out);
 }
-b_tree b_tree::deserialize(std::string file_name) {
-    std::ifstream in(file_paths::DBMS_DAT_FILE_LOCATION + file_name + ".dat", std::ios::binary);
-    size_t name_len = 0;
-    in.read(reinterpret_cast<char*>(&name_len), sizeof(name_len));
 
+
+void node::serialize(std::ofstream& out) {
+    
+    out.write(reinterpret_cast<char*>(&current_key_size), sizeof(current_key_size));
+    for (size_t i = 0; i < current_key_size; ++i) {
+        out.write(reinterpret_cast<char*>(&keys[i].first), sizeof(keys[i].first));
+        out.write(reinterpret_cast<char*>(&keys[i].second), sizeof(keys[i].second));
+    }
+    out.write(reinterpret_cast<char*>(&current_children_size), sizeof(current_children_size));
+    for (size_t i = 0; i < current_children_size && children[i]; ++i)
+        children[i]->serialize(out);
+ 
+}
+
+void b_tree::deserialize(std::ifstream& in) {
+    size_t name_len = 0;
     std::string name;
+    node* root = new node(true);
+    size_t root_key_size = 0;
+    size_t root_children_size = 0;
+
+    in.read(reinterpret_cast<char*>(&name_len), sizeof(name_len));
     name.resize(name_len);
     in.read(&name[0], name_len);
 
-    int amount_of_keys = 0;
-    in.read(reinterpret_cast<char*>(&amount_of_keys), sizeof(amount_of_keys));
-    b_tree tree(name);
-    tree.amount_of_keys = amount_of_keys;
+    root->deserialize(in);
 
-   
-
-    node::deserialize(tree.root, in);
-    in.close();
-
-    return tree;
+    this->name = name;
+    this->root = root;
 }
 
-b_tree::b_tree() {
-    name = "";
-    root = nullptr;
-    amount_of_keys = 0;
+void node::deserialize(std::ifstream & in) {
+    size_t current_key_size = 0;
+    size_t current_children_size = 0;
+    std::array<key_size_pair, MAX_KEYS + 1> keys = {};
+    std::array<node*, MAX_CHILDREN + 1> children = {};
+
+    in.read(reinterpret_cast<char*>(&current_key_size), sizeof(current_key_size));
+
+    for (size_t i = 0; i < current_key_size; ++i) {
+        key_size_pair current_key;
+        in.read(reinterpret_cast<char*>(&current_key.first), sizeof(current_key.first));
+        in.read(reinterpret_cast<char*>(&current_key.second), sizeof(current_key.second));
+        keys[i] = current_key;
+    }
+
+    in.read(reinterpret_cast<char*>(&current_children_size), sizeof(current_children_size));
+
+    for (size_t i = 0; i < current_children_size; ++i) {
+        children[i] = new node(false);
+        children[i]->deserialize(in);
+    }
+
+    this->current_key_size = current_key_size;
+    this->current_children_size = current_children_size;
+    this->keys = keys;
+    this->children = children;
 }
+
+/*
+void node::serialize(std::ofstream& out) {
+
+}
+void deserialize(std::ifstream& in) {
+
+}
+*/
